@@ -1,0 +1,69 @@
+plugins {
+    alias(libs.plugins.android.application)
+}
+
+android {
+    namespace = "com.example.eventfinder"
+    compileSdk = 34
+
+    defaultConfig {
+        applicationId = "com.example.eventfinder"
+        minSdk = 26
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0"
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles(
+                    getDefaultProguardFile("proguard-android-optimize.txt"),
+                    "proguard-rules.pro"
+            )
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    buildFeatures {
+        viewBinding = true
+    }
+}
+
+dependencies {
+    // AndroidX Core
+    implementation(libs.androidx.appcompat)
+    implementation(libs.material)
+    implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.recyclerview)
+    implementation(libs.androidx.cardview)
+    implementation(libs.androidx.swiperefreshlayout)
+    implementation(libs.androidx.viewpager2)
+
+    // Retrofit for networking
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+    implementation(libs.logging.interceptor)
+
+    // Gson
+    implementation(libs.gson)
+
+    // Picasso for image loading
+    implementation(libs.picasso)
+
+    // Google Play Services
+    implementation(libs.play.services.location)
+    implementation(libs.play.services.maps)
+    implementation libs.androidx.activity
+
+    // Testing
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+}
