@@ -1,4 +1,3 @@
-
 package com.example.eventfinder.models;
 
 import com.google.gson.annotations.SerializedName;
@@ -11,7 +10,7 @@ public class EventSearchResponse {
     public Embedded getEmbedded() { return embedded; }
     public void setEmbedded(Embedded embedded) { this.embedded = embedded; }
 
-    class Embedded {
+    public static class Embedded {
         private List<Event> events;
 
         public List<Event> getEvents() { return events; }

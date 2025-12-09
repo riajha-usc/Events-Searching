@@ -1,3 +1,11 @@
 <resources>
-    <string name="app_name">EventFinder</string>
+    <string name="app_name">Event Finder</string>
+    <string name="powered_by_ticketmaster">Powered by Ticketmaster</string>
+    <string name="no_favorites">No Favorites</string>
+    <string name="no_events_found">No events found</string>
+    <string name="search_events">Search events…</string>
+    <string name="keyword_required">Keyword is required</string>
+    <string name="tab_details">Details</string>
+    <string name="tab_artists">Artists</string>
+    <string name="tab_venue">Venue</string>
 </resources>

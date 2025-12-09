@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
 }
 
 android {
@@ -34,6 +35,9 @@ android {
     buildFeatures {
         viewBinding = true
     }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
 }
 
 dependencies {
@@ -60,7 +64,7 @@ dependencies {
     // Google Play Services
     implementation(libs.play.services.location)
     implementation(libs.play.services.maps)
-    implementation libs.androidx.activity
+    // REMOVE THIS LINE: implementation libs.androidx.activity
 
     // Testing
     testImplementation(libs.junit)
