@@ -24,13 +24,21 @@ public class EventDetailsPagerAdapter extends FragmentStateAdapter {
     public Fragment createFragment(int position) {
         switch (position) {
             case 0:
-                return DetailsFragment.newInstance(event);
+                DetailsFragment detailsFragment = new DetailsFragment();
+                detailsFragment.setEvent(event);
+                return detailsFragment;
             case 1:
-                return ArtistsFragment.newInstance(event);
+                ArtistsFragment artistsFragment = new ArtistsFragment();
+                artistsFragment.setEvent(event);
+                return artistsFragment;
             case 2:
-                return VenueFragment.newInstance(event);
+                VenueFragment venueFragment = new VenueFragment();
+                venueFragment.setEvent(event);
+                return venueFragment;
             default:
-                return DetailsFragment.newInstance(event);
+                DetailsFragment defaultFragment = new DetailsFragment();
+                defaultFragment.setEvent(event);
+                return defaultFragment;
         }
     }
 

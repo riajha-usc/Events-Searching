@@ -27,24 +27,11 @@ import java.util.Locale;
 
 public class DetailsFragment extends Fragment {
 
-    private static final String ARG_EVENT = "event";
     private Event event;
-
-    public static DetailsFragment newInstance(Event event) {
-        DetailsFragment fragment = new DetailsFragment();
-        Bundle args = new Bundle();
-        args.putSerializable(ARG_EVENT, (java.io.Serializable) event);
-        fragment.setArguments(args);
-        return fragment;
-    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            // Note: For proper serialization, consider using Parcelable or passing event ID
-            // For now, we'll handle this through a workaround
-        }
     }
 
     @Nullable
