@@ -4,12 +4,12 @@ import android.Manifest;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -54,6 +54,7 @@ import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String TAG = "MainActivity";
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 100;
 
     // UI Components
@@ -82,7 +83,6 @@ public class MainActivity extends AppCompatActivity {
     private static final int SEARCH_DELAY = 300;
 
     private String lastSearchKeyword = "";
-    private String lastSelectedCategory = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,8 +96,8 @@ public class MainActivity extends AppCompatActivity {
             setupLocation();
             loadFavorites();
         } catch (Exception e) {
+            Log.e(TAG, "Error in onCreate", e);
             Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            e.printStackTrace();
         }
     }
 
@@ -132,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupRecyclerView() {
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        // Initialize adapter first
         eventAdapter = new EventAdapter(this, eventList, favoritesList, new EventAdapter.OnEventClickListener() {
             @Override
             public void onEventClick(Event event) {
@@ -144,7 +144,14 @@ public class MainActivity extends AppCompatActivity {
                 toggleFavorite(event, isFavorite);
             }
         });
+
+        // Set layout manager
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        // Attach adapter to RecyclerView
         recyclerView.setAdapter(eventAdapter);
+
+        Log.d(TAG, "RecyclerView setup complete with adapter");
     }
 
     private void setupCategoryTabs() {
@@ -192,6 +199,7 @@ public class MainActivity extends AppCompatActivity {
             fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
                 if (location != null) {
                     currentLatLng = location.getLatitude() + "," + location.getLongitude();
+                    Log.d(TAG, "Got location: " + currentLatLng);
                 }
             });
         }
@@ -220,8 +228,10 @@ public class MainActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     favoritesList.clear();
                     favoritesList.addAll(response.body());
+                    Log.d(TAG, "Loaded " + favoritesList.size() + " favorites");
                     updateFavoritesView();
                 } else {
+                    Log.d(TAG, "No favorites found");
                     showEmptyView("No Favorites");
                 }
             }
@@ -229,6 +239,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<List<FavoriteEvent>> call, Throwable t) {
                 showLoading(false);
+                Log.e(TAG, "Failed to load favorites", t);
                 showEmptyView("No Favorites");
             }
         });
@@ -247,6 +258,7 @@ public class MainActivity extends AppCompatActivity {
                 eventList.add(event);
             }
             eventAdapter.updateEvents(eventList, favoritesList);
+            Log.d(TAG, "Updated favorites view with " + eventList.size() + " events");
         }
     }
 
@@ -352,6 +364,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void performSearch(String keyword, String segmentId, String radius, String geoPoint) {
+        Log.d(TAG, "Performing search: " + keyword);
         showLoading(true);
         categoryTabs.setVisibility(View.VISIBLE);
         isSearchMode = true;
@@ -361,6 +374,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<EventSearchResponse> call, Response<EventSearchResponse> response) {
                 showLoading(false);
+                Log.d(TAG, "Search response received");
 
                 if (response.isSuccessful() && response.body() != null) {
                     EventSearchResponse searchResponse = response.body();
@@ -368,17 +382,21 @@ public class MainActivity extends AppCompatActivity {
                     if (searchResponse.getEmbedded() != null && searchResponse.getEmbedded().getEvents() != null) {
                         eventList.clear();
                         eventList.addAll(searchResponse.getEmbedded().getEvents());
+                        Log.d(TAG, "Found " + eventList.size() + " events");
 
                         if (eventList.isEmpty()) {
                             showEmptyView("No events found");
                         } else {
                             hideEmptyView();
                             eventAdapter.updateEvents(eventList, favoritesList);
+                            Log.d(TAG, "Updated adapter with events");
                         }
                     } else {
+                        Log.d(TAG, "No events in response");
                         showEmptyView("No events found");
                     }
                 } else {
+                    Log.e(TAG, "Search failed: " + response.code());
                     showEmptyView("Search failed");
                 }
             }
@@ -386,6 +404,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<EventSearchResponse> call, Throwable t) {
                 showLoading(false);
+                Log.e(TAG, "Search error", t);
                 showEmptyView("Error: " + t.getMessage());
             }
         });
@@ -403,7 +422,9 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onResponse(Call<FavoriteResponse> call, Response<FavoriteResponse> response) {
                     Toast.makeText(MainActivity.this, "Removed from favorites", Toast.LENGTH_SHORT).show();
-                    loadFavorites();
+                    if (isShowingFavorites) {
+                        loadFavorites();
+                    }
                 }
 
                 @Override
@@ -420,7 +441,21 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onResponse(Call<FavoriteResponse> call, Response<FavoriteResponse> response) {
                     Toast.makeText(MainActivity.this, "Added to favorites", Toast.LENGTH_SHORT).show();
-                    loadFavorites();
+                    // Reload favorites list to get updated data
+                    RetrofitClient.getApiService().getAllFavorites().enqueue(new Callback<List<FavoriteEvent>>() {
+                        @Override
+                        public void onResponse(Call<List<FavoriteEvent>> call, Response<List<FavoriteEvent>> response) {
+                            if (response.isSuccessful() && response.body() != null) {
+                                favoritesList.clear();
+                                favoritesList.addAll(response.body());
+                                eventAdapter.updateEvents(eventList, favoritesList);
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<List<FavoriteEvent>> call, Throwable t) {
+                        }
+                    });
                 }
 
                 @Override
