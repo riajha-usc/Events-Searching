@@ -120,8 +120,8 @@
                         android:layout_height="32dp"
                         android:contentDescription="Open Spotify"
                         android:padding="4dp"
-                        android:src="@android:drawable/ic_menu_share"
-                        app:tint="@color/text_secondary" />
+                        android:src="@android:drawable/arrow_up_float"
+                        app:tint="@color/text_primary" />
 
                 </LinearLayout>
 

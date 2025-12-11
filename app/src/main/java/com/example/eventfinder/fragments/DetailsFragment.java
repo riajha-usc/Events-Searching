@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -42,14 +43,14 @@ public class DetailsFragment extends Fragment {
         TextView dateText = view.findViewById(R.id.dateText);
         TextView artistsText = view.findViewById(R.id.artistsText);
         TextView venueText = view.findViewById(R.id.venueText);
-        TextView genresText = view.findViewById(R.id.genresText);
+        LinearLayout genresContainer = view.findViewById(R.id.genresContainer);
         TextView priceRangeText = view.findViewById(R.id.priceRangeText);
         TextView ticketStatusText = view.findViewById(R.id.ticketStatusText);
         ImageView seatmapImage = view.findViewById(R.id.seatmapImage);
         ImageView buyTicketsIcon = view.findViewById(R.id.buyTicketsIcon);
 
         if (event != null) {
-            populateDetails(dateText, artistsText, venueText, genresText, priceRangeText, ticketStatusText, seatmapImage, buyTicketsIcon);
+            populateDetails(dateText, artistsText, venueText, genresContainer, priceRangeText, ticketStatusText, seatmapImage, buyTicketsIcon);
         }
 
         return view;
@@ -59,7 +60,7 @@ public class DetailsFragment extends Fragment {
         this.event = event;
     }
 
-    private void populateDetails(TextView dateText, TextView artistsText, TextView venueText, TextView genresText, TextView priceRangeText, TextView ticketStatusText, ImageView seatmapImage, ImageView buyTicketsIcon) {
+    private void populateDetails(TextView dateText, TextView artistsText, TextView venueText, LinearLayout genresContainer, TextView priceRangeText, TextView ticketStatusText, ImageView seatmapImage, ImageView buyTicketsIcon) {
 
         // Date and Time
         if (event.getDates() != null && event.getDates().getStart() != null) {
@@ -85,31 +86,28 @@ public class DetailsFragment extends Fragment {
             venueText.setText(event.getEmbedded().getVenues().get(0).getName());
         }
 
-        // Genres
+        // Genres - populate the existing genre TextViews
         if (event.getClassifications() != null && !event.getClassifications().isEmpty()) {
             Classification classification = event.getClassifications().get(0);
-            StringBuilder genres = new StringBuilder();
 
-            if (classification.getSegment() != null)
-                genres.append(classification.getSegment().getName());
+            TextView genre1 = genresContainer.findViewById(R.id.genre1);
+            TextView genre2 = genresContainer.findViewById(R.id.genre2);
+
+            // Clear existing genres
+            genre1.setVisibility(View.GONE);
+            genre2.setVisibility(View.GONE);
+
+            // Set segment (e.g., "Music")
+            if (classification.getSegment() != null && classification.getSegment().getName() != null) {
+                genre1.setText(classification.getSegment().getName());
+                genre1.setVisibility(View.VISIBLE);
+            }
+
+            // Set genre (e.g., "Pop")
             if (classification.getGenre() != null && classification.getGenre().getName() != null) {
-                if (genres.length() > 0) genres.append(" | ");
-                genres.append(classification.getGenre().getName());
+                genre2.setText(classification.getGenre().getName());
+                genre2.setVisibility(View.VISIBLE);
             }
-            if (classification.getSubGenre() != null && classification.getSubGenre().getName() != null) {
-                if (genres.length() > 0) genres.append(" | ");
-                genres.append(classification.getSubGenre().getName());
-            }
-            if (classification.getType() != null && classification.getType().getName() != null) {
-                if (genres.length() > 0) genres.append(" | ");
-                genres.append(classification.getType().getName());
-            }
-            if (classification.getSubType() != null && classification.getSubType().getName() != null) {
-                if (genres.length() > 0) genres.append(" | ");
-                genres.append(classification.getSubType().getName());
-            }
-
-            genresText.setText(genres.toString());
         }
 
         // Price Range
@@ -117,6 +115,7 @@ public class DetailsFragment extends Fragment {
             PriceRange priceRange = event.getPriceRanges().get(0);
             String price = String.format(Locale.US, "$%.2f - $%.2f", priceRange.getMin(), priceRange.getMax());
             priceRangeText.setText(price);
+            priceRangeText.setVisibility(View.VISIBLE);
         }
 
         // Ticket Status

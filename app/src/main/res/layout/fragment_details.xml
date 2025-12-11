@@ -50,8 +50,8 @@
                         android:layout_marginEnd="12dp"
                         android:contentDescription="Open in browser"
                         android:padding="4dp"
-                        android:src="@android:drawable/ic_menu_share"
-                        android:tint="@color/text_secondary" />
+                        android:src="@android:drawable/arrow_up_float"
+                        app:tint="@color/text_primary" />
 
                     <ImageView
                         android:id="@+id/shareIcon"
@@ -60,7 +60,7 @@
                         android:contentDescription="Share"
                         android:padding="4dp"
                         android:src="@android:drawable/ic_menu_share"
-                        android:tint="@color/text_secondary" />
+                        app:tint="@color/text_primary" />
 
                 </LinearLayout>
 

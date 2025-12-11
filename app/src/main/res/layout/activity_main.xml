@@ -45,7 +45,7 @@
                     android:contentDescription="Back"
                     android:padding="4dp"
                     android:src="?attr/homeAsUpIndicator"
-                    android:tint="@color/text_primary" />
+                    app:tint="@color/text_primary" />
 
                 <AutoCompleteTextView
                     android:id="@+id/searchKeywordInput"
@@ -60,13 +60,22 @@
                     android:textSize="16sp" />
 
                 <ImageView
+                    android:id="@+id/clearIcon"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:contentDescription="Clear"
+                    android:padding="4dp"
+                    android:src="@android:drawable/ic_menu_close_clear_cancel"
+                    app:tint="@color/text_secondary" />
+
+                <ImageView
                     android:id="@+id/searchIcon"
                     android:layout_width="32dp"
                     android:layout_height="32dp"
                     android:contentDescription="Search"
                     android:padding="4dp"
                     android:src="@android:drawable/ic_menu_search"
-                    android:tint="@color/blue_primary" />
+                    app:tint="@color/blue_primary" />
 
             </LinearLayout>
 
@@ -98,7 +107,7 @@
                     android:layout_height="24dp"
                     android:contentDescription="Location"
                     android:src="@android:drawable/ic_dialog_map"
-                    android:tint="@color/text_secondary" />
+                    app:tint="@color/text_secondary" />
 
                 <Spinner
                     android:id="@+id/locationSpinner"
@@ -114,7 +123,7 @@
                     android:layout_marginStart="16dp"
                     android:contentDescription="Distance"
                     android:src="@android:drawable/ic_menu_sort_by_size"
-                    android:tint="@color/text_secondary" />
+                    app:tint="@color/text_secondary" />
 
                 <EditText
                     android:id="@+id/distanceInput"
@@ -134,6 +143,29 @@
                     android:text="mi"
                     android:textColor="@color/text_secondary"
                     android:textSize="16sp" />
+
+            </LinearLayout>
+
+            <!-- Manual Location Input (Initially Hidden) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@android:color/white"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="12dp">
+
+                <AutoCompleteTextView
+                    android:id="@+id/manualLocationInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:completionThreshold="1"
+                    android:hint="Enter location (city, zip, etc.)"
+                    android:inputType="text"
+                    android:textSize="16sp"
+                    android:visibility="gone" />
 
             </LinearLayout>
 

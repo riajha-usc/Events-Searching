@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
@@ -65,9 +66,11 @@ public class MainActivity extends AppCompatActivity {
     private AutoCompleteTextView searchKeywordInput;
     private TextView errorText;
     private Spinner locationSpinner;
+    private AutoCompleteTextView manualLocationInput;
     private EditText distanceInput;
     private ImageView backButton;
     private ImageView searchIcon;
+    private ImageView clearIcon;
     private ProgressBar locationProgressBar;
     private RecyclerView recyclerView;
     private EventAdapter eventAdapter;
@@ -80,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
     // Location
     private FusedLocationProviderClient fusedLocationClient;
     private String currentLatLng = "34.0522,-118.2437";
+    private boolean useCurrentLocation = true;
 
     // Data
     private boolean isShowingFavorites = true;
@@ -116,9 +120,11 @@ public class MainActivity extends AppCompatActivity {
         searchKeywordInput = findViewById(R.id.searchKeywordInput);
         errorText = findViewById(R.id.errorText);
         locationSpinner = findViewById(R.id.locationSpinner);
+        manualLocationInput = findViewById(R.id.manualLocationInput);
         distanceInput = findViewById(R.id.distanceInput);
         backButton = findViewById(R.id.backButton);
         searchIcon = findViewById(R.id.searchIcon);
+        clearIcon = findViewById(R.id.clearIcon);
         locationProgressBar = findViewById(R.id.locationProgressBar);
         recyclerView = findViewById(R.id.recyclerView);
         progressBar = findViewById(R.id.progressBar);
@@ -140,6 +146,11 @@ public class MainActivity extends AppCompatActivity {
         // Hide category tabs and search form initially
         categoryTabs.setVisibility(View.GONE);
         searchFormContainer.setVisibility(View.GONE);
+
+        // Initially hide manual location input
+        if (manualLocationInput != null) {
+            manualLocationInput.setVisibility(View.GONE);
+        }
     }
 
     private void setupToolbar() {
@@ -156,6 +167,31 @@ public class MainActivity extends AppCompatActivity {
         locationAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         locationSpinner.setAdapter(locationAdapter);
 
+        // Location spinner listener
+        locationSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (position == 0) {
+                    // Current Location
+                    useCurrentLocation = true;
+                    if (manualLocationInput != null) {
+                        manualLocationInput.setVisibility(View.GONE);
+                        manualLocationInput.setText("");
+                    }
+                } else {
+                    // Other Location
+                    useCurrentLocation = false;
+                    if (manualLocationInput != null) {
+                        manualLocationInput.setVisibility(View.VISIBLE);
+                    }
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
         // Back button
         backButton.setOnClickListener(v -> {
             searchFormContainer.setVisibility(View.GONE);
@@ -165,6 +201,11 @@ public class MainActivity extends AppCompatActivity {
 
         // Search icon
         searchIcon.setOnClickListener(v -> performSearch());
+
+        // Clear icon
+        if (clearIcon != null) {
+            clearIcon.setOnClickListener(v -> clearSearchForm());
+        }
 
         // Keyword autocomplete
         ArrayAdapter<String> keywordAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, new ArrayList<>());
@@ -198,6 +239,23 @@ public class MainActivity extends AppCompatActivity {
             performSearch();
             return true;
         });
+
+        // Manual location autocomplete (if you want to add geocoding suggestions later)
+        if (manualLocationInput != null) {
+            manualLocationInput.setThreshold(1);
+        }
+    }
+
+    private void clearSearchForm() {
+        searchKeywordInput.setText("");
+        distanceInput.setText("10");
+        locationSpinner.setSelection(0);
+        if (manualLocationInput != null) {
+            manualLocationInput.setText("");
+            manualLocationInput.setVisibility(View.GONE);
+        }
+        errorText.setVisibility(View.GONE);
+        useCurrentLocation = true;
     }
 
     private void fetchSuggestions(String keyword, ArrayAdapter<String> adapter) {
@@ -330,8 +388,19 @@ public class MainActivity extends AppCompatActivity {
         String distance = distanceInput.getText().toString().trim();
         if (distance.isEmpty()) distance = "10";
 
+        // Determine location to use
+        String locationToUse = currentLatLng;
+        if (!useCurrentLocation && manualLocationInput != null) {
+            String manualLocation = manualLocationInput.getText().toString().trim();
+            if (!manualLocation.isEmpty()) {
+                // TODO: Geocode manual location - for now use current location
+                // You would need to call a geocoding API here
+                locationToUse = currentLatLng;
+            }
+        }
+
         lastSearchKeyword = keyword;
-        performSearchWithCategory(keyword, "", distance, currentLatLng);
+        performSearchWithCategory(keyword, "", distance, locationToUse);
     }
 
     private void performSearchWithCategory(String keyword, String segmentId, String radius, String geoPoint) {
