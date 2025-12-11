@@ -1,7 +1,9 @@
 package com.example.eventfinder.api;
 
 import com.example.eventfinder.models.*;
+
 import java.util.List;
+
 import retrofit2.Call;
 import retrofit2.http.*;
 
@@ -11,13 +13,7 @@ public interface ApiService {
     Call<SuggestResponse> getSuggestions(@Query("keyword") String keyword);
 
     @GET("api/events/search")
-    Call<EventSearchResponse> searchEvents(
-            @Query("keyword") String keyword,
-            @Query("segmentId") String segmentId,
-            @Query("radius") String radius,
-            @Query("unit") String unit,
-            @Query("geoPoint") String geoPoint
-    );
+    Call<EventSearchResponse> searchEvents(@Query("keyword") String keyword, @Query("segmentId") String segmentId, @Query("radius") String radius, @Query("unit") String unit, @Query("geoPoint") String geoPoint);
 
     @GET("api/events/{id}")
     Call<EventDetailsResponse> getEventDetails(@Path("id") String eventId);

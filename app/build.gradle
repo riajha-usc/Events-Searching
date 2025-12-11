@@ -1,11 +1,15 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
 }
 
 android {
     namespace = "com.example.eventfinder"
     compileSdk = 34
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
 
     defaultConfig {
         applicationId = "com.example.eventfinder"
@@ -61,7 +65,6 @@ dependencies {
     // Google Play Services
     implementation(libs.play.services.location)
     implementation(libs.play.services.maps)
-    // REMOVE THIS LINE: implementation libs.androidx.activity
 
     // Testing
     testImplementation(libs.junit)

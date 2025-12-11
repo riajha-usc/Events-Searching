@@ -27,11 +27,11 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
 
     public interface OnEventClickListener {
         void onEventClick(Event event);
+
         void onFavoriteClick(Event event, boolean isFavorite);
     }
 
-    public EventAdapter(Context context, List<Event> events,
-                        List<FavoriteEvent> favorites, OnEventClickListener listener) {
+    public EventAdapter(Context context, List<Event> events, List<FavoriteEvent> favorites, OnEventClickListener listener) {
         this.context = context;
         this.events = events;
         this.favorites = favorites;
@@ -80,9 +80,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             eventName.setText(event.getName());
 
             // Set venue name
-            if (event.getEmbedded() != null &&
-                    event.getEmbedded().getVenues() != null &&
-                    !event.getEmbedded().getVenues().isEmpty()) {
+            if (event.getEmbedded() != null && event.getEmbedded().getVenues() != null && !event.getEmbedded().getVenues().isEmpty()) {
                 venueName.setText(event.getEmbedded().getVenues().get(0).getName());
             }
 
@@ -95,8 +93,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
 
             // Check if favorite
             boolean isFavorite = isEventFavorite(event.getId());
-            favoriteIcon.setImageResource(isFavorite ?
-                    R.drawable.ic_favorite : R.drawable.ic_favorite_border);
+            favoriteIcon.setImageResource(isFavorite ? R.drawable.ic_favorite : R.drawable.ic_favorite_border);
 
             // Click listeners
             itemView.setOnClickListener(v -> listener.onEventClick(event));
