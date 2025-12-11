@@ -1,7 +1,6 @@
 package com.example.eventfinder;
 
 import android.Manifest;
-import android.app.Dialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -13,13 +12,13 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
-import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.RadioGroup;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -28,6 +27,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -44,6 +44,7 @@ import com.google.android.material.tabs.TabLayout;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -56,9 +57,18 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 100;
+    private static final int SEARCH_DELAY = 300;
 
     // UI Components
     private Toolbar toolbar;
+    private LinearLayout searchFormContainer;
+    private AutoCompleteTextView searchKeywordInput;
+    private TextView errorText;
+    private Spinner locationSpinner;
+    private EditText distanceInput;
+    private ImageView backButton;
+    private ImageView searchIcon;
+    private ProgressBar locationProgressBar;
     private RecyclerView recyclerView;
     private EventAdapter eventAdapter;
     private ProgressBar progressBar;
@@ -69,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Location
     private FusedLocationProviderClient fusedLocationClient;
-    private String currentLatLng = "34.0522,-118.2437"; // Default LA
+    private String currentLatLng = "34.0522,-118.2437";
 
     // Data
     private boolean isShowingFavorites = true;
@@ -77,11 +87,9 @@ public class MainActivity extends AppCompatActivity {
     private List<Event> eventList = new ArrayList<>();
     private List<FavoriteEvent> favoritesList = new ArrayList<>();
 
-    // Autocomplete
+    // Search
     private Handler searchHandler = new Handler();
     private Runnable searchRunnable;
-    private static final int SEARCH_DELAY = 300;
-
     private String lastSearchKeyword = "";
 
     @Override
@@ -91,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
             setContentView(R.layout.activity_main);
             initializeViews();
             setupToolbar();
+            setupSearchForm();
             setupRecyclerView();
             setupCategoryTabs();
             setupLocation();
@@ -103,6 +112,14 @@ public class MainActivity extends AppCompatActivity {
 
     private void initializeViews() {
         toolbar = findViewById(R.id.toolbar);
+        searchFormContainer = findViewById(R.id.searchFormContainer);
+        searchKeywordInput = findViewById(R.id.searchKeywordInput);
+        errorText = findViewById(R.id.errorText);
+        locationSpinner = findViewById(R.id.locationSpinner);
+        distanceInput = findViewById(R.id.distanceInput);
+        backButton = findViewById(R.id.backButton);
+        searchIcon = findViewById(R.id.searchIcon);
+        locationProgressBar = findViewById(R.id.locationProgressBar);
         recyclerView = findViewById(R.id.recyclerView);
         progressBar = findViewById(R.id.progressBar);
         emptyView = findViewById(R.id.emptyView);
@@ -120,8 +137,9 @@ public class MainActivity extends AppCompatActivity {
             startActivity(browserIntent);
         });
 
-        // Hide category tabs initially
+        // Hide category tabs and search form initially
         categoryTabs.setVisibility(View.GONE);
+        searchFormContainer.setVisibility(View.GONE);
     }
 
     private void setupToolbar() {
@@ -131,8 +149,87 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void setupSearchForm() {
+        // Setup location spinner
+        List<String> locationOptions = Arrays.asList("Current Location", "Other Location");
+        ArrayAdapter<String> locationAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, locationOptions);
+        locationAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        locationSpinner.setAdapter(locationAdapter);
+
+        // Back button
+        backButton.setOnClickListener(v -> {
+            searchFormContainer.setVisibility(View.GONE);
+            categoryTabs.setVisibility(View.GONE);
+            loadFavorites();
+        });
+
+        // Search icon
+        searchIcon.setOnClickListener(v -> performSearch());
+
+        // Keyword autocomplete
+        ArrayAdapter<String> keywordAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, new ArrayList<>());
+        searchKeywordInput.setAdapter(keywordAdapter);
+        searchKeywordInput.setThreshold(1);
+
+        searchKeywordInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (searchRunnable != null) {
+                    searchHandler.removeCallbacks(searchRunnable);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                String keyword = s.toString().trim();
+                if (keyword.length() > 0) {
+                    searchRunnable = () -> fetchSuggestions(keyword, keywordAdapter);
+                    searchHandler.postDelayed(searchRunnable, SEARCH_DELAY);
+                }
+            }
+        });
+
+        // Enter key to search
+        searchKeywordInput.setOnEditorActionListener((v, actionId, event) -> {
+            performSearch();
+            return true;
+        });
+    }
+
+    private void fetchSuggestions(String keyword, ArrayAdapter<String> adapter) {
+        RetrofitClient.getApiService().getSuggestions(keyword).enqueue(new Callback<SuggestResponse>() {
+            @Override
+            public void onResponse(Call<SuggestResponse> call, Response<SuggestResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<String> suggestions = new ArrayList<>();
+                    SuggestResponse suggestResponse = response.body();
+
+                    if (suggestResponse.getEmbedded() != null && suggestResponse.getEmbedded().getAttractions() != null) {
+                        for (SuggestResponse.Attraction attraction : suggestResponse.getEmbedded().getAttractions()) {
+                            suggestions.add(attraction.getName());
+                        }
+                    }
+
+                    runOnUiThread(() -> {
+                        adapter.clear();
+                        adapter.addAll(suggestions);
+                        adapter.notifyDataSetChanged();
+                    });
+                }
+            }
+
+            @Override
+            public void onFailure(Call<SuggestResponse> call, Throwable t) {
+                // Silent fail
+            }
+        });
+    }
+
     private void setupRecyclerView() {
-        // Initialize adapter first
         eventAdapter = new EventAdapter(this, eventList, favoritesList, new EventAdapter.OnEventClickListener() {
             @Override
             public void onEventClick(Event event) {
@@ -145,13 +242,17 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Set layout manager
+        // Start with LinearLayout for favorites
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
-        // Attach adapter to RecyclerView
         recyclerView.setAdapter(eventAdapter);
+    }
 
-        Log.d(TAG, "RecyclerView setup complete with adapter");
+    private void switchToGridLayout() {
+        recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+    }
+
+    private void switchToListLayout() {
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
     }
 
     private void setupCategoryTabs() {
@@ -167,7 +268,9 @@ public class MainActivity extends AppCompatActivity {
             public void onTabSelected(TabLayout.Tab tab) {
                 if (isSearchMode && !lastSearchKeyword.isEmpty()) {
                     String categoryId = (String) tab.getTag();
-                    performSearch(lastSearchKeyword, categoryId, "10", currentLatLng);
+                    String distance = distanceInput.getText().toString();
+                    if (distance.isEmpty()) distance = "10";
+                    performSearchWithCategory(lastSearchKeyword, categoryId, distance, currentLatLng);
                 }
             }
 
@@ -196,23 +299,83 @@ public class MainActivity extends AppCompatActivity {
 
     private void getCurrentLocation() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            locationProgressBar.setVisibility(View.VISIBLE);
             fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
+                locationProgressBar.setVisibility(View.GONE);
                 if (location != null) {
                     currentLatLng = location.getLatitude() + "," + location.getLongitude();
                     Log.d(TAG, "Got location: " + currentLatLng);
                 }
+            }).addOnFailureListener(e -> {
+                locationProgressBar.setVisibility(View.GONE);
             });
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                getCurrentLocation();
-            }
+    private void showSearchForm() {
+        searchFormContainer.setVisibility(View.VISIBLE);
+        poweredByText.setVisibility(View.GONE);
+        currentDateText.setVisibility(View.GONE);
+    }
+
+    private void performSearch() {
+        String keyword = searchKeywordInput.getText().toString().trim();
+
+        if (keyword.isEmpty()) {
+            errorText.setVisibility(View.VISIBLE);
+            return;
         }
+
+        errorText.setVisibility(View.GONE);
+        String distance = distanceInput.getText().toString().trim();
+        if (distance.isEmpty()) distance = "10";
+
+        lastSearchKeyword = keyword;
+        performSearchWithCategory(keyword, "", distance, currentLatLng);
+    }
+
+    private void performSearchWithCategory(String keyword, String segmentId, String radius, String geoPoint) {
+        Log.d(TAG, "Performing search: " + keyword);
+        showLoading(true);
+        categoryTabs.setVisibility(View.VISIBLE);
+        isSearchMode = true;
+        isShowingFavorites = false;
+
+        // Switch to grid layout for search results
+        switchToGridLayout();
+
+        RetrofitClient.getApiService().searchEvents(keyword, segmentId, radius, "miles", geoPoint).enqueue(new Callback<EventSearchResponse>() {
+            @Override
+            public void onResponse(Call<EventSearchResponse> call, Response<EventSearchResponse> response) {
+                showLoading(false);
+
+                if (response.isSuccessful() && response.body() != null) {
+                    EventSearchResponse searchResponse = response.body();
+
+                    if (searchResponse.getEmbedded() != null && searchResponse.getEmbedded().getEvents() != null) {
+                        eventList.clear();
+                        eventList.addAll(searchResponse.getEmbedded().getEvents());
+
+                        if (eventList.isEmpty()) {
+                            showEmptyView("No events found");
+                        } else {
+                            hideEmptyView();
+                            eventAdapter.updateEvents(eventList, favoritesList, false);
+                        }
+                    } else {
+                        showEmptyView("No events found");
+                    }
+                } else {
+                    showEmptyView("Search failed");
+                }
+            }
+
+            @Override
+            public void onFailure(Call<EventSearchResponse> call, Throwable t) {
+                showLoading(false);
+                showEmptyView("Error: " + t.getMessage());
+            }
+        });
     }
 
     private void loadFavorites() {
@@ -220,6 +383,12 @@ public class MainActivity extends AppCompatActivity {
         isShowingFavorites = true;
         isSearchMode = false;
         categoryTabs.setVisibility(View.GONE);
+        searchFormContainer.setVisibility(View.GONE);
+        poweredByText.setVisibility(View.VISIBLE);
+        currentDateText.setVisibility(View.VISIBLE);
+
+        // Switch to list layout for favorites
+        switchToListLayout();
 
         RetrofitClient.getApiService().getAllFavorites().enqueue(new Callback<List<FavoriteEvent>>() {
             @Override
@@ -228,10 +397,8 @@ public class MainActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     favoritesList.clear();
                     favoritesList.addAll(response.body());
-                    Log.d(TAG, "Loaded " + favoritesList.size() + " favorites");
                     updateFavoritesView();
                 } else {
-                    Log.d(TAG, "No favorites found");
                     showEmptyView("No Favorites");
                 }
             }
@@ -239,7 +406,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<List<FavoriteEvent>> call, Throwable t) {
                 showLoading(false);
-                Log.e(TAG, "Failed to load favorites", t);
                 showEmptyView("No Favorites");
             }
         });
@@ -257,157 +423,8 @@ public class MainActivity extends AppCompatActivity {
                 event.setName(fav.getName());
                 eventList.add(event);
             }
-            eventAdapter.updateEvents(eventList, favoritesList);
-            Log.d(TAG, "Updated favorites view with " + eventList.size() + " events");
+            eventAdapter.updateEvents(eventList, favoritesList, true);
         }
-    }
-
-    private void showSearchDialog() {
-        Dialog dialog = new Dialog(this);
-        dialog.setContentView(R.layout.dialog_search);
-        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-
-        AutoCompleteTextView searchInput = dialog.findViewById(R.id.searchKeywordInput);
-        TextView errorText = dialog.findViewById(R.id.errorText);
-        RadioGroup locationRadioGroup = dialog.findViewById(R.id.locationRadioGroup);
-        EditText distanceInput = dialog.findViewById(R.id.distanceInput);
-        Button searchButton = dialog.findViewById(R.id.searchButton);
-        Button clearButton = dialog.findViewById(R.id.clearButton);
-
-        setupAutocomplete(searchInput);
-
-        searchButton.setOnClickListener(v -> {
-            String keyword = searchInput.getText().toString().trim();
-
-            if (keyword.isEmpty()) {
-                errorText.setText("Keyword is required");
-                errorText.setVisibility(View.VISIBLE);
-                return;
-            }
-
-            errorText.setVisibility(View.GONE);
-            String distance = distanceInput.getText().toString();
-            if (distance.isEmpty()) distance = "10";
-
-            boolean useCurrentLocation = locationRadioGroup.getCheckedRadioButtonId() == R.id.currentLocationRadio;
-            String geoPoint = useCurrentLocation ? currentLatLng : "34.0522,-118.2437";
-
-            lastSearchKeyword = keyword;
-            performSearch(keyword, "", distance, geoPoint);
-            dialog.dismiss();
-        });
-
-        clearButton.setOnClickListener(v -> {
-            searchInput.setText("");
-            distanceInput.setText("10");
-            errorText.setVisibility(View.GONE);
-        });
-
-        dialog.show();
-    }
-
-    private void setupAutocomplete(AutoCompleteTextView autoCompleteTextView) {
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, new ArrayList<>());
-        autoCompleteTextView.setAdapter(adapter);
-        autoCompleteTextView.setThreshold(1);
-
-        autoCompleteTextView.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (searchRunnable != null) {
-                    searchHandler.removeCallbacks(searchRunnable);
-                }
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                String keyword = s.toString().trim();
-                if (keyword.length() > 0) {
-                    searchRunnable = () -> fetchSuggestions(keyword, adapter);
-                    searchHandler.postDelayed(searchRunnable, SEARCH_DELAY);
-                }
-            }
-        });
-    }
-
-    private void fetchSuggestions(String keyword, ArrayAdapter<String> adapter) {
-        RetrofitClient.getApiService().getSuggestions(keyword).enqueue(new Callback<SuggestResponse>() {
-            @Override
-            public void onResponse(Call<SuggestResponse> call, Response<SuggestResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    List<String> suggestions = new ArrayList<>();
-                    SuggestResponse suggestResponse = response.body();
-
-                    if (suggestResponse.getEmbedded() != null && suggestResponse.getEmbedded().getAttractions() != null) {
-                        for (SuggestResponse.Attraction attraction : suggestResponse.getEmbedded().getAttractions()) {
-                            suggestions.add(attraction.getName());
-                        }
-                    }
-
-                    runOnUiThread(() -> {
-                        adapter.clear();
-                        adapter.addAll(suggestions);
-                        adapter.notifyDataSetChanged();
-                    });
-                }
-            }
-
-            @Override
-            public void onFailure(Call<SuggestResponse> call, Throwable t) {
-                // Silent fail for autocomplete
-            }
-        });
-    }
-
-    private void performSearch(String keyword, String segmentId, String radius, String geoPoint) {
-        Log.d(TAG, "Performing search: " + keyword);
-        showLoading(true);
-        categoryTabs.setVisibility(View.VISIBLE);
-        isSearchMode = true;
-        isShowingFavorites = false;
-
-        RetrofitClient.getApiService().searchEvents(keyword, segmentId, radius, "miles", geoPoint).enqueue(new Callback<EventSearchResponse>() {
-            @Override
-            public void onResponse(Call<EventSearchResponse> call, Response<EventSearchResponse> response) {
-                showLoading(false);
-                Log.d(TAG, "Search response received");
-
-                if (response.isSuccessful() && response.body() != null) {
-                    EventSearchResponse searchResponse = response.body();
-
-                    if (searchResponse.getEmbedded() != null && searchResponse.getEmbedded().getEvents() != null) {
-                        eventList.clear();
-                        eventList.addAll(searchResponse.getEmbedded().getEvents());
-                        Log.d(TAG, "Found " + eventList.size() + " events");
-
-                        if (eventList.isEmpty()) {
-                            showEmptyView("No events found");
-                        } else {
-                            hideEmptyView();
-                            eventAdapter.updateEvents(eventList, favoritesList);
-                            Log.d(TAG, "Updated adapter with events");
-                        }
-                    } else {
-                        Log.d(TAG, "No events in response");
-                        showEmptyView("No events found");
-                    }
-                } else {
-                    Log.e(TAG, "Search failed: " + response.code());
-                    showEmptyView("Search failed");
-                }
-            }
-
-            @Override
-            public void onFailure(Call<EventSearchResponse> call, Throwable t) {
-                showLoading(false);
-                Log.e(TAG, "Search error", t);
-                showEmptyView("Error: " + t.getMessage());
-            }
-        });
     }
 
     private void openEventDetails(String eventId) {
@@ -422,9 +439,7 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onResponse(Call<FavoriteResponse> call, Response<FavoriteResponse> response) {
                     Toast.makeText(MainActivity.this, "Removed from favorites", Toast.LENGTH_SHORT).show();
-                    if (isShowingFavorites) {
-                        loadFavorites();
-                    }
+                    reloadFavoritesList();
                 }
 
                 @Override
@@ -441,21 +456,7 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onResponse(Call<FavoriteResponse> call, Response<FavoriteResponse> response) {
                     Toast.makeText(MainActivity.this, "Added to favorites", Toast.LENGTH_SHORT).show();
-                    // Reload favorites list to get updated data
-                    RetrofitClient.getApiService().getAllFavorites().enqueue(new Callback<List<FavoriteEvent>>() {
-                        @Override
-                        public void onResponse(Call<List<FavoriteEvent>> call, Response<List<FavoriteEvent>> response) {
-                            if (response.isSuccessful() && response.body() != null) {
-                                favoritesList.clear();
-                                favoritesList.addAll(response.body());
-                                eventAdapter.updateEvents(eventList, favoritesList);
-                            }
-                        }
-
-                        @Override
-                        public void onFailure(Call<List<FavoriteEvent>> call, Throwable t) {
-                        }
-                    });
+                    reloadFavoritesList();
                 }
 
                 @Override
@@ -464,6 +465,27 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+    }
+
+    private void reloadFavoritesList() {
+        RetrofitClient.getApiService().getAllFavorites().enqueue(new Callback<List<FavoriteEvent>>() {
+            @Override
+            public void onResponse(Call<List<FavoriteEvent>> call, Response<List<FavoriteEvent>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    favoritesList.clear();
+                    favoritesList.addAll(response.body());
+                    if (isShowingFavorites) {
+                        updateFavoritesView();
+                    } else {
+                        eventAdapter.updateEvents(eventList, favoritesList, false);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<FavoriteEvent>> call, Throwable t) {
+            }
+        });
     }
 
     private void showLoading(boolean show) {
@@ -491,17 +513,25 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.action_search) {
-            showSearchDialog();
+            showSearchForm();
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
     @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                getCurrentLocation();
+            }
+        }
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
-        if (isShowingFavorites) {
-            loadFavorites();
-        }
+        reloadFavoritesList();
     }
 }

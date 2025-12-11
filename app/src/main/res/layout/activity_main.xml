@@ -1,28 +1,165 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/white">
 
     <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        app:elevation="0dp">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
-            app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+            android:background="@color/blue_primary"
+            app:titleTextColor="@color/white" />
 
+        <!-- Search Form (Initially Hidden) -->
+        <LinearLayout
+            android:id="@+id/searchFormContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/gray_light"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:visibility="gone">
+
+            <!-- Keyword Input Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:color/white"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="8dp">
+
+                <ImageView
+                    android:id="@+id/backButton"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:contentDescription="Back"
+                    android:padding="4dp"
+                    android:src="?attr/homeAsUpIndicator"
+                    android:tint="@color/text_primary" />
+
+                <AutoCompleteTextView
+                    android:id="@+id/searchKeywordInput"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent"
+                    android:completionThreshold="1"
+                    android:hint="Search events..."
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:textSize="16sp" />
+
+                <ImageView
+                    android:id="@+id/searchIcon"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:contentDescription="Search"
+                    android:padding="4dp"
+                    android:src="@android:drawable/ic_menu_search"
+                    android:tint="@color/blue_primary" />
+
+            </LinearLayout>
+
+            <!-- Error Text -->
+            <TextView
+                android:id="@+id/errorText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="12dp"
+                android:paddingTop="4dp"
+                android:paddingEnd="12dp"
+                android:text="Keyword is required"
+                android:textColor="@color/error"
+                android:textSize="14sp"
+                android:visibility="gone" />
+
+            <!-- Location and Distance Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@android:color/white"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="12dp">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:contentDescription="Location"
+                    android:src="@android:drawable/ic_dialog_map"
+                    android:tint="@color/text_secondary" />
+
+                <Spinner
+                    android:id="@+id/locationSpinner"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:spinnerMode="dropdown" />
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginStart="16dp"
+                    android:contentDescription="Distance"
+                    android:src="@android:drawable/ic_menu_sort_by_size"
+                    android:tint="@color/text_secondary" />
+
+                <EditText
+                    android:id="@+id/distanceInput"
+                    android:layout_width="60dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:background="@android:color/transparent"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:text="10"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="mi"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="16sp" />
+
+            </LinearLayout>
+
+            <!-- Location Input Progress -->
+            <ProgressBar
+                android:id="@+id/locationProgressBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="8dp"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+        <!-- Category Tabs -->
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/categoryTabs"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@color/white"
             android:visibility="gone"
+            app:tabGravity="fill"
+            app:tabIndicatorColor="@color/blue_primary"
             app:tabMode="scrollable"
-            app:tabGravity="fill" />
+            app:tabSelectedTextColor="@color/blue_primary"
+            app:tabTextColor="@color/text_secondary" />
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -37,48 +174,58 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <!-- Powered by Ticketmaster (Only on Home) -->
             <TextView
                 android:id="@+id/poweredByText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Powered by Ticketmaster"
-                android:textColor="@color/purple_500"
-                android:textSize="14sp"
                 android:layout_gravity="center"
-                android:padding="8dp"
                 android:clickable="true"
-                android:focusable="true" />
+                android:focusable="true"
+                android:padding="8dp"
+                android:text="Powered by Ticketmaster"
+                android:textColor="@color/blue_primary"
+                android:textSize="14sp" />
 
+            <!-- Current Date (Only on Home) -->
             <TextView
                 android:id="@+id/currentDateText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="16sp"
                 android:layout_gravity="center"
-                android:padding="8dp" />
+                android:padding="8dp"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp" />
 
+            <!-- Progress Bar -->
             <ProgressBar
                 android:id="@+id/progressBar"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
+                android:indeterminateTint="@color/blue_primary"
                 android:visibility="gone" />
 
+            <!-- Empty View -->
             <TextView
                 android:id="@+id/emptyView"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="No Favorites"
-                android:textSize="18sp"
-                android:layout_gravity="center"
                 android:layout_marginTop="50dp"
+                android:background="@drawable/rounded_background"
+                android:gravity="center"
+                android:padding="20dp"
+                android:text="No Favorites"
+                android:textColor="@color/text_secondary"
+                android:textSize="18sp"
                 android:visibility="gone" />
 
+            <!-- RecyclerView -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp" />
+                android:layout_marginTop="8dp" />
 
         </LinearLayout>
 
