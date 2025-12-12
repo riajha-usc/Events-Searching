@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -48,9 +49,10 @@ public class DetailsFragment extends Fragment {
         TextView ticketStatusText = view.findViewById(R.id.ticketStatusText);
         ImageView seatmapImage = view.findViewById(R.id.seatmapImage);
         ImageView buyTicketsIcon = view.findViewById(R.id.buyTicketsIcon);
+        ImageView shareIcon = view.findViewById(R.id.shareIcon); // ADD THIS LINE
 
         if (event != null) {
-            populateDetails(dateText, artistsText, venueText, genresContainer, priceRangeText, ticketStatusText, seatmapImage, buyTicketsIcon);
+            populateDetails(dateText, artistsText, venueText, genresContainer, priceRangeText, ticketStatusText, seatmapImage, buyTicketsIcon, shareIcon); // UPDATE THIS LINE
         }
 
         return view;
@@ -60,7 +62,7 @@ public class DetailsFragment extends Fragment {
         this.event = event;
     }
 
-    private void populateDetails(TextView dateText, TextView artistsText, TextView venueText, LinearLayout genresContainer, TextView priceRangeText, TextView ticketStatusText, ImageView seatmapImage, ImageView buyTicketsIcon) {
+    private void populateDetails(TextView dateText, TextView artistsText, TextView venueText, LinearLayout genresContainer, TextView priceRangeText, TextView ticketStatusText, ImageView seatmapImage, ImageView buyTicketsIcon, ImageView shareIcon) { // ADD shareIcon PARAMETER
 
         // Date and Time
         if (event.getDates() != null && event.getDates().getStart() != null) {
@@ -147,6 +149,41 @@ public class DetailsFragment extends Fragment {
                 startActivity(intent);
             }
         });
+
+        // ADD THIS: Share Icon Click Listener
+        shareIcon.setOnClickListener(v -> shareEvent());
+    }
+
+    // ADD THIS METHOD
+    private void shareEvent() {
+        if (event == null) {
+            Toast.makeText(getContext(), "Event details not available", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (event.getUrl() == null) {
+            Toast.makeText(getContext(), "Event URL not available", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Create share text
+        String shareText = "Check out " + event.getName() + " on Ticketmaster: " + event.getUrl();
+
+        // Create share intent
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("text/plain");
+        shareIntent.putExtra(Intent.EXTRA_TEXT, shareText);
+        shareIntent.putExtra(Intent.EXTRA_SUBJECT, event.getName());
+
+        // Create chooser to show all sharing options
+        Intent chooserIntent = Intent.createChooser(shareIntent, "Share event via");
+
+        // Verify that the intent can be resolved and start it
+        if (getActivity() != null && shareIntent.resolveActivity(getActivity().getPackageManager()) != null) {
+            startActivity(chooserIntent);
+        } else {
+            Toast.makeText(getContext(), "No apps available to share", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private String formatDate(String date, String time) {

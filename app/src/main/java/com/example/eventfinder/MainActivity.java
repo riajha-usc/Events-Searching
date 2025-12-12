@@ -47,6 +47,7 @@ import com.google.android.material.tabs.TabLayout;
 import android.location.Address;
 import android.location.Geocoder;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 100;
-    private static final int SEARCH_DELAY = 300;
+    private static final int SEARCH_DELAY = 500;
 
     // UI Components
     private Toolbar toolbar;
@@ -283,7 +284,7 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void afterTextChanged(Editable s) {
                     String location = s.toString().trim();
-                    if (location.length() >= 1) {
+                    if (location.length() >= 3) {
                         locationRunnable = () -> fetchLocationSuggestions(location);
                         locationHandler.postDelayed(locationRunnable, SEARCH_DELAY);
                     } else {
@@ -320,6 +321,10 @@ public class MainActivity extends AppCompatActivity {
         new Thread(() -> {
             try {
                 Log.d(TAG, "Geocoding location: " + location);
+
+                // Add a small delay to avoid overwhelming the geocoder service
+                Thread.sleep(100);
+
                 List<Address> addresses = geocoder.getFromLocationName(location, 10);
 
                 if (addresses != null && !addresses.isEmpty()) {
@@ -379,12 +384,24 @@ public class MainActivity extends AppCompatActivity {
                         Log.d(TAG, "No geocoding results found");
                     });
                 }
-            } catch (Exception e) {
+            } catch (IOException e) {
                 Log.e(TAG, "Geocoding error", e);
                 runOnUiThread(() -> {
                     locationProgressBar.setVisibility(View.GONE);
-                    Toast.makeText(MainActivity.this, "Error fetching location suggestions", Toast.LENGTH_SHORT).show();
+
+                    // Check if it's a DeadObjectException
+                    if (e.getMessage() != null && e.getMessage().contains("DeadObjectException")) {
+                        // Recreate the Geocoder instance
+                        geocoder = new Geocoder(MainActivity.this, Locale.US);
+                        Log.w(TAG, "Geocoder service died, recreated instance");
+                    }
+
+                    // Don't show toast on every error, just log it
+                    Log.w(TAG, "Location suggestions temporarily unavailable");
                 });
+            } catch (InterruptedException e) {
+                Log.e(TAG, "Thread interrupted", e);
+                Thread.currentThread().interrupt();
             }
         }).start();
     }

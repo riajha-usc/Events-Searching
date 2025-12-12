@@ -193,11 +193,26 @@ public class EventDetailsActivity extends AppCompatActivity {
     private void shareEvent() {
         if (eventDetails == null) return;
 
+        // Create the share text with event details
         String shareText = "Check out " + eventDetails.getName() + " on Ticketmaster: " + eventDetails.getUrl();
+
+        // Create the share intent
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType("text/plain");
         shareIntent.putExtra(Intent.EXTRA_TEXT, shareText);
-        startActivity(Intent.createChooser(shareIntent, "Share event"));
+
+        // Add a subject line (optional but good practice)
+        shareIntent.putExtra(Intent.EXTRA_SUBJECT, eventDetails.getName());
+
+        // Create chooser to show all sharing options
+        Intent chooserIntent = Intent.createChooser(shareIntent, "Share event via");
+
+        // Verify that the intent can be resolved
+        if (shareIntent.resolveActivity(getPackageManager()) != null) {
+            startActivity(chooserIntent);
+        } else {
+            Toast.makeText(this, "No apps available to share", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
