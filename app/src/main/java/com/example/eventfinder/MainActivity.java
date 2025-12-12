@@ -39,6 +39,7 @@ import com.example.eventfinder.models.EventSearchResponse;
 import com.example.eventfinder.models.FavoriteEvent;
 import com.example.eventfinder.models.FavoriteResponse;
 import com.example.eventfinder.models.SuggestResponse;
+import com.example.eventfinder.utils.TimeUtils;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.material.card.MaterialCardView;
@@ -474,7 +475,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void switchToGridLayout() {
-        recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+        recyclerView.setLayoutManager(new GridLayoutManager(this, 1));
     }
 
     private void switchToListLayout() {
@@ -746,9 +747,34 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         } else {
+            // CREATE COMPLETE FAVORITE EVENT OBJECT
             FavoriteEvent favorite = new FavoriteEvent();
             favorite.setEventId(event.getId());
             favorite.setName(event.getName());
+
+            // ADD IMAGE URL
+            if (event.getImages() != null && !event.getImages().isEmpty()) {
+                favorite.setImageUrl(event.getImages().get(0).getUrl());
+            }
+
+            // ADD DATE
+            if (event.getDates() != null && event.getDates().getStart() != null) {
+                String date = event.getDates().getStart().getLocalDate();
+                String time = event.getDates().getStart().getLocalTime();
+                favorite.setDate(TimeUtils.formatEventDate(date, time));
+            }
+
+            // ADD VENUE
+            if (event.getEmbedded() != null && event.getEmbedded().getVenues() != null && !event.getEmbedded().getVenues().isEmpty()) {
+                favorite.setVenue(event.getEmbedded().getVenues().get(0).getName());
+            }
+
+            // ADD CATEGORY
+            if (event.getClassifications() != null && !event.getClassifications().isEmpty()) {
+                if (event.getClassifications().get(0).getSegment() != null) {
+                    favorite.setCategory(event.getClassifications().get(0).getSegment().getName());
+                }
+            }
 
             RetrofitClient.getApiService().addFavorite(favorite).enqueue(new Callback<FavoriteResponse>() {
                 @Override

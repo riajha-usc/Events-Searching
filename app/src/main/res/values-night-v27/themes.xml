@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Dark theme -->
+
     <style name="Theme.EventFinder" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color -->
         <item name="colorPrimary">@color/blue_primary</item>
@@ -32,12 +32,5 @@
         <!-- Additional attributes -->
         <item name="android:textColorPrimary">@color/text_primary</item>
         <item name="android:textColorSecondary">@color/text_secondary</item>
-    </style>
-
-    <!-- Splash theme for dark mode -->
-    <style name="SplashTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="android:windowBackground">@color/background_light</item>
-        <item name="android:statusBarColor">@color/background_light</item>
-        <item name="android:windowLightStatusBar">false</item>
     </style>
 </resources>

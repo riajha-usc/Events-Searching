@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Base application theme with dynamic colors support -->
+    <!-- Base application theme -->
     <style name="Theme.EventFinder" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color -->
         <item name="colorPrimary">@color/blue_primary</item>
@@ -19,14 +19,19 @@
 
         <!-- Status bar -->
         <item name="android:statusBarColor">@color/blue_primary</item>
-        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightStatusBar">true</item>
 
         <!-- Navigation bar -->
         <item name="android:navigationBarColor">@color/background_light</item>
+        <item name="android:windowLightNavigationBar">true</item>
 
         <!-- Error colors -->
         <item name="colorError">@color/error</item>
         <item name="colorOnError">@color/white</item>
+
+        <!-- Additional attributes -->
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
     </style>
 
     <!-- Splash theme -->

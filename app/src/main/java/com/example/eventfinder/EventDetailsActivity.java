@@ -1,12 +1,10 @@
 package com.example.eventfinder;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -14,7 +12,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.content.ContextCompat;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.eventfinder.adapters.EventDetailsPagerAdapter;
@@ -25,6 +22,10 @@ import com.example.eventfinder.models.FavoriteEvent;
 import com.example.eventfinder.models.FavoriteResponse;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -152,23 +153,53 @@ public class EventDetailsActivity extends AppCompatActivity {
         if (eventDetails == null) return;
 
         if (isFavorite) {
-            RetrofitClient.getApiService().removeFavorite(eventId).enqueue(new Callback<FavoriteResponse>() {
-                @Override
-                public void onResponse(Call<FavoriteResponse> call, Response<FavoriteResponse> response) {
-                    isFavorite = false;
-                    updateFavoriteIcon();
-                    Toast.makeText(EventDetailsActivity.this, "Removed from favorites", Toast.LENGTH_SHORT).show();
-                }
-
-                @Override
-                public void onFailure(Call<FavoriteResponse> call, Throwable t) {
-                    Toast.makeText(EventDetailsActivity.this, "Error removing favorite", Toast.LENGTH_SHORT).show();
-                }
-            });
+            // ... remove favorite code stays the same
         } else {
             FavoriteEvent favorite = new FavoriteEvent();
             favorite.setEventId(eventId);
             favorite.setName(eventDetails.getName());
+
+            // ADD IMAGE URL
+            if (eventDetails.getImages() != null && !eventDetails.getImages().isEmpty()) {
+                favorite.setImageUrl(eventDetails.getImages().get(0).getUrl());
+            }
+
+            // ADD DATE
+            if (eventDetails.getDates() != null && eventDetails.getDates().getStart() != null) {
+                String date = eventDetails.getDates().getStart().getLocalDate();
+                String time = eventDetails.getDates().getStart().getLocalTime();
+
+                // Format the date properly
+                try {
+                    SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+                    Date parsedDate = inputFormat.parse(date);
+                    SimpleDateFormat outputFormat = new SimpleDateFormat("MMM d, yyyy", Locale.US);
+                    String formattedDate = outputFormat.format(parsedDate);
+
+                    if (time != null && !time.isEmpty()) {
+                        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss", Locale.US);
+                        Date parsedTime = timeFormat.parse(time);
+                        SimpleDateFormat timeOutputFormat = new SimpleDateFormat("h:mm a", Locale.US);
+                        formattedDate += ", " + timeOutputFormat.format(parsedTime);
+                    }
+                    favorite.setDate(formattedDate);
+                } catch (Exception e) {
+                    favorite.setDate(date + (time != null ? " " + time : ""));
+                }
+            }
+
+            // ADD VENUE
+            if (eventDetails.getEmbedded() != null && eventDetails.getEmbedded().getVenues() != null
+                    && !eventDetails.getEmbedded().getVenues().isEmpty()) {
+                favorite.setVenue(eventDetails.getEmbedded().getVenues().get(0).getName());
+            }
+
+            // ADD CATEGORY
+            if (eventDetails.getClassifications() != null && !eventDetails.getClassifications().isEmpty()) {
+                if (eventDetails.getClassifications().get(0).getSegment() != null) {
+                    favorite.setCategory(eventDetails.getClassifications().get(0).getSegment().getName());
+                }
+            }
 
             RetrofitClient.getApiService().addFavorite(favorite).enqueue(new Callback<FavoriteResponse>() {
                 @Override

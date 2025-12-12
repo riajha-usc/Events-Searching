@@ -3,6 +3,7 @@
     <!-- Primary brand colors -->
     <color name="blue_primary">#3DB7DC</color>
     <color name="blue_dark">#2A8FAD</color>
+    <color name="blue_light">#6ED4F0</color>
 
     <!-- Basic colors -->
     <color name="white">#FFFFFFFF</color>
@@ -11,10 +12,11 @@
     <!-- Light mode colors -->
     <color name="gray_light">#F5F5F5</color>
     <color name="gray_medium">#CCCCCC</color>
+    <color name="gray_dark">#757575</color>
     <color name="text_primary">#212121</color>
     <color name="text_secondary">#757575</color>
     <color name="background_light">#FFFFFF</color>
-    <color name="surface_light">#F5F5F5</color>
+    <color name="surface_light">#FFFFFF</color>
 
     <!-- Error color -->
     <color name="error">#D32F2F</color>
