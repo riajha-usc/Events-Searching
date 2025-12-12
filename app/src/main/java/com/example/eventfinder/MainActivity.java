@@ -15,7 +15,6 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -51,8 +50,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -98,8 +99,14 @@ public class MainActivity extends AppCompatActivity {
 
     // Search
     private Handler searchHandler = new Handler();
+    private Handler locationHandler = new Handler();
     private Runnable searchRunnable;
+    private Runnable locationRunnable;
     private String lastSearchKeyword = "";
+
+    // Location cache
+    private Map<String, String> locationCache = new HashMap<>();
+    private ArrayAdapter<String> locationAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -168,9 +175,9 @@ public class MainActivity extends AppCompatActivity {
     private void setupSearchForm() {
         // Setup location spinner
         List<String> locationOptions = Arrays.asList("Current Location", "Other Location");
-        ArrayAdapter<String> locationAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, locationOptions);
-        locationAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        locationSpinner.setAdapter(locationAdapter);
+        ArrayAdapter<String> locationSpinnerAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, locationOptions);
+        locationSpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        locationSpinner.setAdapter(locationSpinnerAdapter);
 
         // Location spinner listener
         locationSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -245,58 +252,128 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
 
-        // Manual location autocomplete (if you want to add geocoding suggestions later)
+        // Manual location autocomplete setup
         if (manualLocationInput != null) {
-            manualLocationInput.setThreshold(1);
+            locationAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, new ArrayList<>());
+            manualLocationInput.setAdapter(locationAdapter);
+            manualLocationInput.setThreshold(1); // Start suggesting after 1 character for better UX
+            manualLocationInput.setDropDownHeight(600); // Set a reasonable height for dropdown
+
+            manualLocationInput.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                }
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    if (locationRunnable != null) {
+                        locationHandler.removeCallbacks(locationRunnable);
+                    }
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {
+                    String location = s.toString().trim();
+                    if (location.length() >= 1) {
+                        locationRunnable = () -> fetchLocationSuggestions(location);
+                        locationHandler.postDelayed(locationRunnable, SEARCH_DELAY);
+                    } else {
+                        // Clear suggestions if input is empty
+                        locationAdapter.clear();
+                        locationAdapter.notifyDataSetChanged();
+                    }
+                }
+            });
+
+            // Handle location selection
+            manualLocationInput.setOnItemClickListener((parent, view, position, id) -> {
+                String selectedLocation = (String) parent.getItemAtPosition(position);
+                Log.d(TAG, "Location selected: " + selectedLocation);
+
+                // Important: Set the text and move cursor to end
+                manualLocationInput.setText(selectedLocation);
+                manualLocationInput.setSelection(selectedLocation.length());
+
+                // Dismiss the dropdown
+                manualLocationInput.dismissDropDown();
+            });
+
+            // Handle focus changes to properly reset
+            manualLocationInput.setOnFocusChangeListener((v, hasFocus) -> {
+                if (!hasFocus) {
+                    manualLocationInput.dismissDropDown();
+                }
+            });
         }
     }
 
-    private void fetchLocationSuggestions(String location, ArrayAdapter<String> adapter) {
-        // Use Android's Geocoder to get location suggestions
+    private void fetchLocationSuggestions(String location) {
+        if (geocoder == null || !Geocoder.isPresent()) {
+            Log.e(TAG, "Geocoder not available");
+            return;
+        }
+
+        locationProgressBar.setVisibility(View.VISIBLE);
+
         new Thread(() -> {
             try {
                 Log.d(TAG, "Geocoding location: " + location);
-                List<Address> addresses = geocoder.getFromLocationName(location, 5);
-                Log.d(TAG, "Geocoder returned " + (addresses != null ? addresses.size() : 0) + " results");
+                List<Address> addresses = geocoder.getFromLocationName(location, 10);
 
                 if (addresses != null && !addresses.isEmpty()) {
                     List<String> suggestions = new ArrayList<>();
 
-                    // Add "Current Location" as first option
-                    suggestions.add("Current Location");
-
-                    // Add geocoded addresses
                     for (Address address : addresses) {
                         StringBuilder addressString = new StringBuilder();
 
-                        // Build a readable address string
+                        // Build a readable address string with more detail for better matching
                         if (address.getLocality() != null) {
                             addressString.append(address.getLocality());
+                        } else if (address.getSubAdminArea() != null) {
+                            addressString.append(address.getSubAdminArea());
                         }
+
                         if (address.getAdminArea() != null) {
                             if (addressString.length() > 0) addressString.append(", ");
                             addressString.append(address.getAdminArea());
                         }
+
                         if (address.getCountryName() != null) {
                             if (addressString.length() > 0) addressString.append(", ");
                             addressString.append(address.getCountryName());
                         }
 
                         if (addressString.length() > 0) {
-                            suggestions.add(addressString.toString());
-                            Log.d(TAG, "Added suggestion: " + addressString.toString());
+                            String displayAddress = addressString.toString();
+
+                            // Avoid duplicates
+                            if (!suggestions.contains(displayAddress)) {
+                                suggestions.add(displayAddress);
+
+                                // Cache the lat/lng for this address
+                                String latLng = address.getLatitude() + "," + address.getLongitude();
+                                locationCache.put(displayAddress, latLng);
+
+                                Log.d(TAG, "Added suggestion: " + displayAddress + " -> " + latLng);
+                            }
                         }
                     }
 
                     runOnUiThread(() -> {
                         locationProgressBar.setVisibility(View.GONE);
-                        adapter.clear();
-                        adapter.addAll(suggestions);
-                        adapter.notifyDataSetChanged();
+
+                        if (suggestions.isEmpty()) {
+                            Log.d(TAG, "No suggestions to display");
+                            return;
+                        }
+
+                        locationAdapter.clear();
+                        locationAdapter.addAll(suggestions);
+                        locationAdapter.notifyDataSetChanged();
                         Log.d(TAG, "Updated adapter with " + suggestions.size() + " suggestions");
 
                         // Force show the dropdown
-                        if (manualLocationInput != null && suggestions.size() > 0) {
+                        if (manualLocationInput != null && !manualLocationInput.getText().toString().isEmpty()) {
                             manualLocationInput.showDropDown();
                         }
                     });
@@ -310,6 +387,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.e(TAG, "Geocoding error", e);
                 runOnUiThread(() -> {
                     locationProgressBar.setVisibility(View.GONE);
+                    Toast.makeText(MainActivity.this, "Error fetching location suggestions", Toast.LENGTH_SHORT).show();
                 });
             }
         }).start();
@@ -321,7 +399,15 @@ public class MainActivity extends AppCompatActivity {
         locationSpinner.setSelection(0);
         if (manualLocationInput != null) {
             manualLocationInput.setText("");
+            manualLocationInput.dismissDropDown();
             manualLocationInput.setVisibility(View.GONE);
+        }
+        // Clear the location cache
+        locationCache.clear();
+        // Clear the adapter
+        if (locationAdapter != null) {
+            locationAdapter.clear();
+            locationAdapter.notifyDataSetChanged();
         }
         errorText.setVisibility(View.GONE);
         useCurrentLocation = true;
@@ -397,7 +483,9 @@ public class MainActivity extends AppCompatActivity {
                     String categoryId = (String) tab.getTag();
                     String distance = distanceInput.getText().toString();
                     if (distance.isEmpty()) distance = "10";
-                    performSearchWithCategory(lastSearchKeyword, categoryId, distance, currentLatLng);
+
+                    String locationToUse = getSearchLocation();
+                    performSearchWithCategory(lastSearchKeyword, categoryId, distance, locationToUse);
                 }
             }
 
@@ -442,11 +530,55 @@ public class MainActivity extends AppCompatActivity {
                 if (location != null) {
                     currentLatLng = location.getLatitude() + "," + location.getLongitude();
                     Log.d(TAG, "Got location: " + currentLatLng);
+                } else {
+                    Log.w(TAG, "Location is null, using default Los Angeles coordinates");
                 }
             }).addOnFailureListener(e -> {
                 locationProgressBar.setVisibility(View.GONE);
+                Log.e(TAG, "Failed to get location", e);
             });
         }
+    }
+
+    private String getSearchLocation() {
+        if (useCurrentLocation) {
+            return currentLatLng;
+        } else if (manualLocationInput != null) {
+            String manualLocation = manualLocationInput.getText().toString().trim();
+            if (!manualLocation.isEmpty()) {
+                // Check if we have cached lat/lng for this location
+                if (locationCache.containsKey(manualLocation)) {
+                    String cachedLatLng = locationCache.get(manualLocation);
+                    Log.d(TAG, "Using cached location: " + manualLocation + " -> " + cachedLatLng);
+                    return cachedLatLng;
+                } else {
+                    // Try to geocode it synchronously
+                    Log.d(TAG, "Geocoding manually entered location: " + manualLocation);
+                    String geocodedLatLng = geocodeLocationSync(manualLocation);
+                    return geocodedLatLng != null ? geocodedLatLng : currentLatLng;
+                }
+            }
+        }
+        return currentLatLng;
+    }
+
+    private String geocodeLocationSync(String locationName) {
+        if (geocoder == null || !Geocoder.isPresent()) {
+            return null;
+        }
+
+        try {
+            List<Address> addresses = geocoder.getFromLocationName(locationName, 1);
+            if (addresses != null && !addresses.isEmpty()) {
+                Address address = addresses.get(0);
+                String latLng = address.getLatitude() + "," + address.getLongitude();
+                Log.d(TAG, "Geocoded " + locationName + " to " + latLng);
+                return latLng;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error geocoding location", e);
+        }
+        return null;
     }
 
     private void showSearchForm() {
@@ -467,30 +599,20 @@ public class MainActivity extends AppCompatActivity {
         String distance = distanceInput.getText().toString().trim();
         if (distance.isEmpty()) distance = "10";
 
-        // Determine location to use
-        String locationToUse = currentLatLng;
-        if (!useCurrentLocation && manualLocationInput != null) {
-            String manualLocation = manualLocationInput.getText().toString().trim();
-            if (!manualLocation.isEmpty()) {
-                // TODO: Geocode manual location - for now use current location
-                // You would need to call a geocoding API here
-                locationToUse = currentLatLng;
-            }
-        }
-
+        String locationToUse = getSearchLocation();
         lastSearchKeyword = keyword;
         performSearchWithCategory(keyword, "", distance, locationToUse);
     }
 
     private void performSearchWithCategory(String keyword, String segmentId, String radius, String geoPoint) {
-        Log.d(TAG, "Performing search: " + keyword);
+        Log.d(TAG, "Performing search: " + keyword + " at " + geoPoint);
         showLoading(true);
         categoryTabs.setVisibility(View.VISIBLE);
         isSearchMode = true;
         isShowingFavorites = false;
 
-        // Switch to grid layout for search results
-        switchToGridLayout();
+        // Switch to LINEAR layout for search results (single column, one item per row)
+        switchToListLayout();
 
         RetrofitClient.getApiService().searchEvents(keyword, segmentId, radius, "miles", geoPoint).enqueue(new Callback<EventSearchResponse>() {
             @Override
