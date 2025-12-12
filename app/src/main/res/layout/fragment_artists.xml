@@ -3,14 +3,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white">
+    android:background="?attr/colorSurface">
 
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:indeterminateTint="@color/blue_primary"
+        android:indeterminateTint="?attr/colorPrimary"
         android:visibility="gone" />
 
     <TextView
@@ -19,7 +19,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:text="No artist data"
-        android:textColor="@color/text_secondary"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="18sp"
         android:visibility="gone" />
 
@@ -40,7 +40,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                app:cardBackgroundColor="@color/gray_light"
+                app:cardBackgroundColor="?attr/colorSurface"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="2dp">
 
@@ -71,7 +71,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Ed Sheeran"
-                            android:textColor="@color/text_primary"
+                            android:textColor="?attr/colorOnSurface"
                             android:textSize="20sp"
                             android:textStyle="bold" />
 
@@ -86,7 +86,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Followers: 122,989,098"
-                                android:textColor="@color/text_secondary"
+                                android:textColor="?attr/colorOnSurface"
                                 android:textSize="14sp" />
 
                             <TextView
@@ -95,7 +95,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="16dp"
                                 android:text="Popularity: 89%"
-                                android:textColor="@color/text_secondary"
+                                android:textColor="?attr/colorOnSurface"
                                 android:textSize="14sp" />
 
                         </LinearLayout>
@@ -109,7 +109,7 @@
                             android:paddingHorizontal="12dp"
                             android:paddingVertical="4dp"
                             android:text="soft pop"
-                            android:textColor="@color/text_primary"
+                            android:textColor="?attr/colorOnSurface"
                             android:textSize="12sp" />
 
                     </LinearLayout>
@@ -121,7 +121,7 @@
                         android:contentDescription="Open Spotify"
                         android:padding="4dp"
                         android:src="@drawable/ic_open_in_new"
-                        app:tint="@color/text_primary" />
+                        app:tint="?attr/colorOnSurface" />
 
                 </LinearLayout>
 
@@ -133,7 +133,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
                 android:text="Albums"
-                android:textColor="@color/text_primary"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="20sp"
                 android:textStyle="bold" />
 

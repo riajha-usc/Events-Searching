@@ -3,13 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
+    android:background="?attr/colorSurface"
     android:padding="16dp">
 
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardBackgroundColor="@color/gray_light"
+        app:cardBackgroundColor="?attr/colorSurface"
         app:cardCornerRadius="12dp"
         app:cardElevation="2dp">
 
@@ -25,7 +25,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="200dp"
                 android:layout_marginBottom="16dp"
-                android:background="@color/white"
+                android:background="?attr/colorSurface"
                 android:contentDescription="Venue logo"
                 android:scaleType="fitCenter" />
 
@@ -43,7 +43,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="SoFi Stadium"
-                    android:textColor="@color/text_primary"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="22sp"
                     android:textStyle="bold" />
 
@@ -54,7 +54,7 @@
                     android:contentDescription="Open Ticketmaster"
                     android:padding="4dp"
                     android:src="@drawable/ic_open_in_new"
-                    app:tint="@color/text_primary" />
+                    app:tint="?attr/colorOnSurface" />
 
             </LinearLayout>
 
@@ -64,7 +64,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="1001 S. Stadium Dr, Inglewood, CA, US"
-                android:textColor="@color/text_secondary"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="16sp" />
 
         </LinearLayout>

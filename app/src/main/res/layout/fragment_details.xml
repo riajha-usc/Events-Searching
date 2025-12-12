@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
+    android:background="?attr/colorSurface"
     android:padding="16dp">
 
     <LinearLayout
@@ -16,7 +16,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            app:cardBackgroundColor="@color/gray_light"
+            app:cardBackgroundColor="?attr/colorSurface"
             app:cardCornerRadius="12dp"
             app:cardElevation="2dp">
 
@@ -39,7 +39,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="Event"
-                        android:textColor="@color/text_primary"
+                        android:textColor="?attr/colorOnSurface"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -51,7 +51,7 @@
                         android:contentDescription="Open in browser"
                         android:padding="4dp"
                         android:src="@drawable/ic_open_in_new"
-                        app:tint="@color/text_primary" />
+                        app:tint="?attr/colorOnSurface" />
 
                     <ImageView
                         android:id="@+id/shareIcon"
@@ -60,7 +60,7 @@
                         android:contentDescription="Share"
                         android:padding="4dp"
                         android:src="@android:drawable/ic_menu_share"
-                        app:tint="@color/text_primary" />
+                        app:tint="?attr/colorOnSurface" />
 
                 </LinearLayout>
 
@@ -70,7 +70,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:text="Date"
-                    android:textColor="@color/text_secondary"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="14sp" />
 
                 <TextView
@@ -79,7 +79,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="12dp"
                     android:text="Aug 8, 2026, 5:30 PM"
-                    android:textColor="@color/text_primary"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="16sp" />
 
                 <!-- Artists -->
@@ -87,7 +87,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Artists"
-                    android:textColor="@color/text_secondary"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="14sp" />
 
                 <TextView
@@ -96,7 +96,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="12dp"
                     android:text="Ed Sheeran, Myles Smith, Sigrid, Aaron Rowe"
-                    android:textColor="@color/text_primary"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="16sp" />
 
                 <!-- Venue -->
@@ -104,7 +104,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Venue"
-                    android:textColor="@color/text_secondary"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="14sp" />
 
                 <TextView
@@ -113,7 +113,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="12dp"
                     android:text="SoFi Stadium"
-                    android:textColor="@color/text_primary"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="16sp" />
 
                 <!-- Genres -->
@@ -121,7 +121,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Genres"
-                    android:textColor="@color/text_secondary"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="14sp" />
 
                 <LinearLayout
@@ -140,7 +140,7 @@
                         android:paddingHorizontal="12dp"
                         android:paddingVertical="6dp"
                         android:text="Music"
-                        android:textColor="@color/text_primary"
+                        android:textColor="?attr/colorOnSurface"
                         android:textSize="14sp" />
 
                     <TextView
@@ -151,7 +151,7 @@
                         android:paddingHorizontal="12dp"
                         android:paddingVertical="6dp"
                         android:text="Pop"
-                        android:textColor="@color/text_primary"
+                        android:textColor="?attr/colorOnSurface"
                         android:textSize="14sp" />
 
                 </LinearLayout>
@@ -161,7 +161,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Price Range"
-                    android:textColor="@color/text_secondary"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="14sp"
                     android:visibility="gone" />
 
@@ -170,7 +170,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="12dp"
-                    android:textColor="@color/text_primary"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="16sp"
                     android:visibility="gone" />
 
@@ -179,7 +179,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Ticket Status"
-                    android:textColor="@color/text_secondary"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="14sp" />
 
                 <TextView
@@ -190,7 +190,7 @@
                     android:paddingHorizontal="16dp"
                     android:paddingVertical="8dp"
                     android:text="On Sale"
-                    android:textColor="@color/blue_primary"
+                    android:textColor="?attr/colorPrimary"
                     android:textSize="16sp" />
 
             </LinearLayout>
@@ -201,7 +201,7 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardBackgroundColor="@color/gray_light"
+            app:cardBackgroundColor="?attr/colorSurface"
             app:cardCornerRadius="12dp"
             app:cardElevation="2dp">
 
@@ -216,7 +216,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="12dp"
                     android:text="Seatmap"
-                    android:textColor="@color/text_primary"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="18sp"
                     android:textStyle="bold" />
 

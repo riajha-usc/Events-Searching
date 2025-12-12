@@ -41,6 +41,7 @@ import com.example.eventfinder.models.FavoriteResponse;
 import com.example.eventfinder.models.SuggestResponse;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.tabs.TabLayout;
 
 import android.location.Address;
@@ -70,7 +71,9 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout searchFormContainer;
     private AutoCompleteTextView searchKeywordInput;
     private TextView errorText;
+    private TextView distanceErrorText;
     private Spinner locationSpinner;
+    private MaterialCardView manualLocationCard;
     private AutoCompleteTextView manualLocationInput;
     private EditText distanceInput;
     private ImageView backButton;
@@ -80,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private EventAdapter eventAdapter;
     private ProgressBar progressBar;
+    private MaterialCardView emptyViewCard;
     private TextView emptyView;
     private TextView poweredByText;
     private TextView currentDateText;
@@ -131,7 +135,9 @@ public class MainActivity extends AppCompatActivity {
         searchFormContainer = findViewById(R.id.searchFormContainer);
         searchKeywordInput = findViewById(R.id.searchKeywordInput);
         errorText = findViewById(R.id.errorText);
+        distanceErrorText = findViewById(R.id.distanceErrorText);
         locationSpinner = findViewById(R.id.locationSpinner);
+        manualLocationCard = findViewById(R.id.manualLocationCard);
         manualLocationInput = findViewById(R.id.manualLocationInput);
         distanceInput = findViewById(R.id.distanceInput);
         backButton = findViewById(R.id.backButton);
@@ -140,6 +146,7 @@ public class MainActivity extends AppCompatActivity {
         locationProgressBar = findViewById(R.id.locationProgressBar);
         recyclerView = findViewById(R.id.recyclerView);
         progressBar = findViewById(R.id.progressBar);
+        emptyViewCard = findViewById(R.id.emptyViewCard);
         emptyView = findViewById(R.id.emptyView);
         poweredByText = findViewById(R.id.poweredByText);
         currentDateText = findViewById(R.id.currentDateText);
@@ -159,9 +166,9 @@ public class MainActivity extends AppCompatActivity {
         categoryTabs.setVisibility(View.GONE);
         searchFormContainer.setVisibility(View.GONE);
 
-        // Initially hide manual location input
-        if (manualLocationInput != null) {
-            manualLocationInput.setVisibility(View.GONE);
+        // Initially hide manual location card
+        if (manualLocationCard != null) {
+            manualLocationCard.setVisibility(View.GONE);
         }
     }
 
@@ -186,15 +193,17 @@ public class MainActivity extends AppCompatActivity {
                 if (position == 0) {
                     // Current Location
                     useCurrentLocation = true;
-                    if (manualLocationInput != null) {
-                        manualLocationInput.setVisibility(View.GONE);
-                        manualLocationInput.setText("");
+                    if (manualLocationCard != null) {
+                        manualLocationCard.setVisibility(View.GONE);
+                        if (manualLocationInput != null) {
+                            manualLocationInput.setText("");
+                        }
                     }
                 } else {
                     // Other Location
                     useCurrentLocation = false;
-                    if (manualLocationInput != null) {
-                        manualLocationInput.setVisibility(View.VISIBLE);
+                    if (manualLocationCard != null) {
+                        manualLocationCard.setVisibility(View.VISIBLE);
                     }
                 }
             }
@@ -256,8 +265,8 @@ public class MainActivity extends AppCompatActivity {
         if (manualLocationInput != null) {
             locationAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, new ArrayList<>());
             manualLocationInput.setAdapter(locationAdapter);
-            manualLocationInput.setThreshold(1); // Start suggesting after 1 character for better UX
-            manualLocationInput.setDropDownHeight(600); // Set a reasonable height for dropdown
+            manualLocationInput.setThreshold(1);
+            manualLocationInput.setDropDownHeight(600);
 
             manualLocationInput.addTextChangedListener(new TextWatcher() {
                 @Override
@@ -278,27 +287,20 @@ public class MainActivity extends AppCompatActivity {
                         locationRunnable = () -> fetchLocationSuggestions(location);
                         locationHandler.postDelayed(locationRunnable, SEARCH_DELAY);
                     } else {
-                        // Clear suggestions if input is empty
                         locationAdapter.clear();
                         locationAdapter.notifyDataSetChanged();
                     }
                 }
             });
 
-            // Handle location selection
             manualLocationInput.setOnItemClickListener((parent, view, position, id) -> {
                 String selectedLocation = (String) parent.getItemAtPosition(position);
                 Log.d(TAG, "Location selected: " + selectedLocation);
-
-                // Important: Set the text and move cursor to end
                 manualLocationInput.setText(selectedLocation);
                 manualLocationInput.setSelection(selectedLocation.length());
-
-                // Dismiss the dropdown
                 manualLocationInput.dismissDropDown();
             });
 
-            // Handle focus changes to properly reset
             manualLocationInput.setOnFocusChangeListener((v, hasFocus) -> {
                 if (!hasFocus) {
                     manualLocationInput.dismissDropDown();
@@ -326,7 +328,6 @@ public class MainActivity extends AppCompatActivity {
                     for (Address address : addresses) {
                         StringBuilder addressString = new StringBuilder();
 
-                        // Build a readable address string with more detail for better matching
                         if (address.getLocality() != null) {
                             addressString.append(address.getLocality());
                         } else if (address.getSubAdminArea() != null) {
@@ -346,14 +347,10 @@ public class MainActivity extends AppCompatActivity {
                         if (addressString.length() > 0) {
                             String displayAddress = addressString.toString();
 
-                            // Avoid duplicates
                             if (!suggestions.contains(displayAddress)) {
                                 suggestions.add(displayAddress);
-
-                                // Cache the lat/lng for this address
                                 String latLng = address.getLatitude() + "," + address.getLongitude();
                                 locationCache.put(displayAddress, latLng);
-
                                 Log.d(TAG, "Added suggestion: " + displayAddress + " -> " + latLng);
                             }
                         }
@@ -372,7 +369,6 @@ public class MainActivity extends AppCompatActivity {
                         locationAdapter.notifyDataSetChanged();
                         Log.d(TAG, "Updated adapter with " + suggestions.size() + " suggestions");
 
-                        // Force show the dropdown
                         if (manualLocationInput != null && !manualLocationInput.getText().toString().isEmpty()) {
                             manualLocationInput.showDropDown();
                         }
@@ -400,16 +396,17 @@ public class MainActivity extends AppCompatActivity {
         if (manualLocationInput != null) {
             manualLocationInput.setText("");
             manualLocationInput.dismissDropDown();
-            manualLocationInput.setVisibility(View.GONE);
         }
-        // Clear the location cache
+        if (manualLocationCard != null) {
+            manualLocationCard.setVisibility(View.GONE);
+        }
         locationCache.clear();
-        // Clear the adapter
         if (locationAdapter != null) {
             locationAdapter.clear();
             locationAdapter.notifyDataSetChanged();
         }
         errorText.setVisibility(View.GONE);
+        distanceErrorText.setVisibility(View.GONE);
         useCurrentLocation = true;
     }
 
@@ -455,7 +452,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Start with LinearLayout for favorites
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(eventAdapter);
     }
@@ -503,7 +499,6 @@ public class MainActivity extends AppCompatActivity {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         geocoder = new Geocoder(this, Locale.US);
 
-        // Check if Geocoder is available
         if (!Geocoder.isPresent()) {
             Log.e(TAG, "Geocoder is not available on this device!");
             Toast.makeText(this, "Geocoding not available on this device", Toast.LENGTH_LONG).show();
@@ -546,13 +541,11 @@ public class MainActivity extends AppCompatActivity {
         } else if (manualLocationInput != null) {
             String manualLocation = manualLocationInput.getText().toString().trim();
             if (!manualLocation.isEmpty()) {
-                // Check if we have cached lat/lng for this location
                 if (locationCache.containsKey(manualLocation)) {
                     String cachedLatLng = locationCache.get(manualLocation);
                     Log.d(TAG, "Using cached location: " + manualLocation + " -> " + cachedLatLng);
                     return cachedLatLng;
                 } else {
-                    // Try to geocode it synchronously
                     Log.d(TAG, "Geocoding manually entered location: " + manualLocation);
                     String geocodedLatLng = geocodeLocationSync(manualLocation);
                     return geocodedLatLng != null ? geocodedLatLng : currentLatLng;
@@ -589,15 +582,34 @@ public class MainActivity extends AppCompatActivity {
 
     private void performSearch() {
         String keyword = searchKeywordInput.getText().toString().trim();
+        String distance = distanceInput.getText().toString().trim();
 
+        // Validate keyword
         if (keyword.isEmpty()) {
             errorText.setVisibility(View.VISIBLE);
+            distanceErrorText.setVisibility(View.GONE);
             return;
         }
-
         errorText.setVisibility(View.GONE);
-        String distance = distanceInput.getText().toString().trim();
-        if (distance.isEmpty()) distance = "10";
+
+        // Validate distance
+        if (distance.isEmpty()) {
+            distance = "10";
+        } else {
+            try {
+                int distanceValue = Integer.parseInt(distance);
+                if (distanceValue <= 0) {
+                    distanceErrorText.setText("Distance must be greater than 0");
+                    distanceErrorText.setVisibility(View.VISIBLE);
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                distanceErrorText.setText("Invalid distance value");
+                distanceErrorText.setVisibility(View.VISIBLE);
+                return;
+            }
+        }
+        distanceErrorText.setVisibility(View.GONE);
 
         String locationToUse = getSearchLocation();
         lastSearchKeyword = keyword;
@@ -611,8 +623,8 @@ public class MainActivity extends AppCompatActivity {
         isSearchMode = true;
         isShowingFavorites = false;
 
-        // Switch to LINEAR layout for search results (single column, one item per row)
-        switchToListLayout();
+        // FIXED: Switch to GRID layout for search results (2 columns)
+        switchToGridLayout();
 
         RetrofitClient.getApiService().searchEvents(keyword, segmentId, radius, "miles", geoPoint).enqueue(new Callback<EventSearchResponse>() {
             @Override
@@ -657,7 +669,6 @@ public class MainActivity extends AppCompatActivity {
         poweredByText.setVisibility(View.VISIBLE);
         currentDateText.setVisibility(View.VISIBLE);
 
-        // Switch to list layout for favorites
         switchToListLayout();
 
         RetrofitClient.getApiService().getAllFavorites().enqueue(new Callback<List<FavoriteEvent>>() {
@@ -761,16 +772,17 @@ public class MainActivity extends AppCompatActivity {
     private void showLoading(boolean show) {
         progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
         recyclerView.setVisibility(show ? View.GONE : View.VISIBLE);
+        emptyViewCard.setVisibility(View.GONE);
     }
 
     private void showEmptyView(String message) {
         emptyView.setText(message);
-        emptyView.setVisibility(View.VISIBLE);
+        emptyViewCard.setVisibility(View.VISIBLE);
         recyclerView.setVisibility(View.GONE);
     }
 
     private void hideEmptyView() {
-        emptyView.setVisibility(View.GONE);
+        emptyViewCard.setVisibility(View.GONE);
         recyclerView.setVisibility(View.VISIBLE);
     }
 

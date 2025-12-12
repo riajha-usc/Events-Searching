@@ -1,5 +1,9 @@
 package com.example.eventfinder.api;
 
+import android.content.pm.PackageManager;
+
+import androidx.annotation.NonNull;
+
 import com.example.eventfinder.models.*;
 
 import java.util.List;
