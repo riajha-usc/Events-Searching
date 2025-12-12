@@ -106,8 +106,7 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:contentDescription="Location"
-                    android:src="@android:drawable/ic_dialog_map"
-                    app:tint="@color/text_secondary" />
+                    android:src="@drawable/ic_location" />
 
                 <Spinner
                     android:id="@+id/locationSpinner"

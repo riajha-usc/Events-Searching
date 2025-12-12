@@ -53,7 +53,7 @@
                     android:layout_height="32dp"
                     android:contentDescription="Open Ticketmaster"
                     android:padding="4dp"
-                    android:src="@android:drawable/arrow_up_float"
+                    android:src="@drawable/ic_open_in_new"
                     app:tint="@color/text_primary" />
 
             </LinearLayout>
