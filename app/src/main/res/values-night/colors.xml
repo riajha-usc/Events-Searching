@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Primary brand colors -->
+    <!-- Primary brand colors (same in dark mode) -->
     <color name="blue_primary">#3DB7DC</color>
     <color name="blue_dark">#2A8FAD</color>
 
@@ -8,17 +8,17 @@
     <color name="white">#FFFFFFFF</color>
     <color name="black">#FF000000</color>
 
-    <!-- Light mode colors -->
-    <color name="gray_light">#F5F5F5</color>
-    <color name="gray_medium">#CCCCCC</color>
-    <color name="text_primary">#212121</color>
-    <color name="text_secondary">#757575</color>
-    <color name="background_light">#FFFFFF</color>
-    <color name="surface_light">#F5F5F5</color>
+    <!-- Dark mode colors -->
+    <color name="gray_light">#2C2C2C</color>
+    <color name="gray_medium">#555555</color>
+    <color name="text_primary">#E0E0E0</color>
+    <color name="text_secondary">#A0A0A0</color>
+    <color name="background_light">#121212</color>
+    <color name="surface_light">#1E1E1E</color>
 
     <!-- Error color -->
-    <color name="error">#D32F2F</color>
-    <color name="error_dark">#B71C1C</color>
+    <color name="error">#EF5350</color>
+    <color name="error_dark">#D32F2F</color>
 
     <!-- Legacy colors for compatibility -->
     <color name="purple_200">#FFBB86FC</color>

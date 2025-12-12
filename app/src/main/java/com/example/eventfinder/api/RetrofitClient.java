@@ -11,9 +11,6 @@ public class RetrofitClient {
 
     // TODO: REPLACE WITH YOUR BACKEND URL
     private static final String BASE_URL = "https://search-event-svc-98723.uc.r.appspot.com/";
-    // For production: "https://your-app-id.appspot.com/"
-    // For local emulator: "http://10.0.2.2:8080/"
-    // For physical device: "http://YOUR_COMPUTER_IP:8080/"
 
     private static Retrofit retrofit = null;
     private static ApiService apiService = null;

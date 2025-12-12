@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
+    app:cardBackgroundColor="?attr/colorSurface"
     app:cardCornerRadius="16dp"
     app:cardElevation="4dp">
 
@@ -24,7 +25,7 @@
                 android:contentDescription="Event image"
                 android:scaleType="centerCrop" />
 
-            <!-- Category Badge (Top Left) -->
+            <!-- Category Badge -->
             <TextView
                 android:id="@+id/categoryBadge"
                 android:layout_width="wrap_content"
@@ -39,7 +40,7 @@
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
-            <!-- Date Badge (Top Right) -->
+            <!-- Date Badge -->
             <TextView
                 android:id="@+id/dateBadge"
                 android:layout_width="wrap_content"
@@ -60,7 +61,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/gray_light"
+            android:background="?attr/colorSurface"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:padding="12dp">
@@ -81,7 +82,7 @@
                     android:marqueeRepeatLimit="marquee_forever"
                     android:singleLine="true"
                     android:text="Ed Sheeran: LOOP Tour"
-                    android:textColor="@color/text_primary"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
@@ -91,7 +92,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="SoFi Stadium"
-                    android:textColor="@color/text_secondary"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="14sp" />
 
             </LinearLayout>

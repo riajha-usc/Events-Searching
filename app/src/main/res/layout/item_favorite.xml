@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="?attr/selectableItemBackground"
@@ -31,7 +32,7 @@
             android:focusableInTouchMode="true"
             android:marqueeRepeatLimit="marquee_forever"
             android:singleLine="true"
-            android:textColor="@color/text_primary"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="16sp"
             android:textStyle="bold" />
 
@@ -40,7 +41,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:textColor="@color/text_secondary"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="14sp" />
 
     </LinearLayout>
@@ -51,7 +52,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
-        android:textColor="@color/text_secondary"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="12sp" />
 
     <ImageView
@@ -59,6 +60,6 @@
         android:layout_height="24dp"
         android:contentDescription="More"
         android:src="@android:drawable/ic_menu_more"
-        android:tint="@color/text_secondary" />
+        app:tint="?attr/colorOnSurface" />
 
 </LinearLayout>
