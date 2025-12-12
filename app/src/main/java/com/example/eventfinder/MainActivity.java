@@ -15,6 +15,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -42,6 +43,9 @@ import com.example.eventfinder.models.SuggestResponse;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.material.tabs.TabLayout;
+
+import android.location.Address;
+import android.location.Geocoder;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -82,6 +86,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Location
     private FusedLocationProviderClient fusedLocationClient;
+    private Geocoder geocoder;
     private String currentLatLng = "34.0522,-118.2437";
     private boolean useCurrentLocation = true;
 
@@ -246,6 +251,70 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void fetchLocationSuggestions(String location, ArrayAdapter<String> adapter) {
+        // Use Android's Geocoder to get location suggestions
+        new Thread(() -> {
+            try {
+                Log.d(TAG, "Geocoding location: " + location);
+                List<Address> addresses = geocoder.getFromLocationName(location, 5);
+                Log.d(TAG, "Geocoder returned " + (addresses != null ? addresses.size() : 0) + " results");
+
+                if (addresses != null && !addresses.isEmpty()) {
+                    List<String> suggestions = new ArrayList<>();
+
+                    // Add "Current Location" as first option
+                    suggestions.add("Current Location");
+
+                    // Add geocoded addresses
+                    for (Address address : addresses) {
+                        StringBuilder addressString = new StringBuilder();
+
+                        // Build a readable address string
+                        if (address.getLocality() != null) {
+                            addressString.append(address.getLocality());
+                        }
+                        if (address.getAdminArea() != null) {
+                            if (addressString.length() > 0) addressString.append(", ");
+                            addressString.append(address.getAdminArea());
+                        }
+                        if (address.getCountryName() != null) {
+                            if (addressString.length() > 0) addressString.append(", ");
+                            addressString.append(address.getCountryName());
+                        }
+
+                        if (addressString.length() > 0) {
+                            suggestions.add(addressString.toString());
+                            Log.d(TAG, "Added suggestion: " + addressString.toString());
+                        }
+                    }
+
+                    runOnUiThread(() -> {
+                        locationProgressBar.setVisibility(View.GONE);
+                        adapter.clear();
+                        adapter.addAll(suggestions);
+                        adapter.notifyDataSetChanged();
+                        Log.d(TAG, "Updated adapter with " + suggestions.size() + " suggestions");
+
+                        // Force show the dropdown
+                        if (manualLocationInput != null && suggestions.size() > 0) {
+                            manualLocationInput.showDropDown();
+                        }
+                    });
+                } else {
+                    runOnUiThread(() -> {
+                        locationProgressBar.setVisibility(View.GONE);
+                        Log.d(TAG, "No geocoding results found");
+                    });
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Geocoding error", e);
+                runOnUiThread(() -> {
+                    locationProgressBar.setVisibility(View.GONE);
+                });
+            }
+        }).start();
+    }
+
     private void clearSearchForm() {
         searchKeywordInput.setText("");
         distanceInput.setText("10");
@@ -344,6 +413,16 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupLocation() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        geocoder = new Geocoder(this, Locale.US);
+
+        // Check if Geocoder is available
+        if (!Geocoder.isPresent()) {
+            Log.e(TAG, "Geocoder is not available on this device!");
+            Toast.makeText(this, "Geocoding not available on this device", Toast.LENGTH_LONG).show();
+        } else {
+            Log.d(TAG, "Geocoder is available");
+        }
+
         requestLocationPermission();
     }
 
