@@ -12,8 +12,8 @@ Events-Searching consists of three layers:
 - **Web Frontend** - Angular + Tailwind CSS single-page app deployed to Google App Engine.
 - **Android App** - Native Android application (Java) that consumes the same backend API.
 
-Live deployment: [https://search-event-svc-98723.uc.r.appspot.com/](https://search-event-svc-98723.uc.r.appspot.com/)
-
+- [Live deployment](https://search-event-svc-98723.uc.r.appspot.com/)
+- [Github Repo(Backend server)](https://github.com/riajha-usc/event-search-app)
 ---
 
 ## Features
